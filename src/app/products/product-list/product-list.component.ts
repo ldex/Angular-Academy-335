@@ -17,14 +17,27 @@ export class ProductListComponent implements OnInit {
 
   title: string = 'Products';
   selectedProduct: Product;
+
   products$: Observable<Product[]>;
+  productsNumber$: Observable<number>;
+  mostExpensiveProduct$: Observable<Product>;
+
+  message: string;
   errorMessage;
 
   // Pagination
+  productsToLoad = this.productService.productsToLoad;
   pageSize = 5;
   start = 0;
   end = this.pageSize;
   currentPage = 1;
+
+  loadMore() {
+    let skip = this.end;
+    let take = this.productsToLoad;
+
+    this.productService.initProducts(skip, take);
+  }
 
   previousPage() {
     this.start -= this.pageSize;
@@ -62,10 +75,27 @@ export class ProductListComponent implements OnInit {
     this.products$ = this
                       .productService
                       .products$;
+
+    this.productsNumber$ = this
+                              .products$
+                              .pipe(
+                                map(products => products.length),
+                                startWith(0)
+                              )
+
+    this.mostExpensiveProduct$ = this
+                                  .productService
+                                  .mostExpensiveProduct$;
+
+    this.favouriteService
+        .favourite$
+        .subscribe(
+          product => this.message = "New favourite product: " + product.name
+        )
   }
 
   refresh() {
     this.productService.initProducts();
     this.router.navigateByUrl('/products'); // Self route navigation
-  }  
+  }
 }
